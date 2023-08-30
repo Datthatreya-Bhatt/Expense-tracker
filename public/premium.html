@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/premium.css">
+    <title>Expence tracker app</title>
+</head>
+<body>
+    <div class="container">
+        <div class="item">
+            <form>
+                <label >Amount</label><br>
+                <input type="text" id="amount" required ><br>
+                <label  >Description</label><br>
+                <input type="email" id="description" required><br>
+
+                <select id="category">
+                    <option value="food">Food</option>
+                    <option value="petrol">Petrol</option>
+                    <option value="salary">Salary</option>
+                   
+                </select>
+
+
+            </form>
+            <button id="button">Submit</button>
+
+            <div class="buy" id="premium">
+                <p>You are a premium user <button id="btn">leaderboard</button> <button id="btn2">Download File</button> <button id="btn3">Downloaded Files List</button></p>
+               
+            </div>
+            
+        </div>
+        <div id="list">
+            
+        </div><br>
+        <div id="pagination">
+          
+        </div><br>
+        <div id="leaderboard">
+            
+        </div><br>
+        <div id="downlodedList">
+            
+        </div>
+    </div>
+
+   
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src="/js/premium.js"></script>
+</body>
+</html>

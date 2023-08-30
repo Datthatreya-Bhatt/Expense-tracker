@@ -1,0 +1,19 @@
+.container{
+    width: 100%;
+    border: 1px solid black;
+    display: grid;
+    grid-template-rows: 100px 100px 100px 100px  100px;    
+    grid-template-columns: 100px 100px 100px 100px 100px ;
+   
+}
+form{
+    border: 1px solid black;
+}
+
+.item{
+    grid-area: 3/4/3/4;
+}
+
+body{
+    background-color: yellow;
+}
