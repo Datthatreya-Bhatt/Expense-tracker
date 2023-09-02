@@ -1,21 +1,22 @@
 const jwt = require('jsonwebtoken');
-const sk = require('../credentials/jwtSecret');
+require('dotenv').config();
 
-exports.auth = (req,res,next)=>{
+exports.auth = async (req,res,next)=>{
     
     let token = req.header('Authorization');
+
     
+    let validity = await jwt.verify(`${token}`,process.env.JWT_S_KEY);
 
 
-    jwt.verify(`${token}`,sk,(err,decode)=>{
-        if(err){
-            console.error("errorr at auth 11 >>>>>>",err);
-            res.redirect('/user/login');
-        }else{
-            console.log("ans at auth 14>>>>>>",decode);
-            req.userID = decode.id;
-            next();
-        }
-    });
+    if(validity){
+        req.userID = validity.id;
+        next();
+        
+    }else{
+        console.trace(validity);
+        res.redirect('/user/login');
+       
+    }
     
 };

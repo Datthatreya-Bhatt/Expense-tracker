@@ -1,22 +1,21 @@
 const path = require('path');
 const AWS = require('aws-sdk');
-const { Sequelize  } = require('sequelize');
 
 require('dotenv').config();
 
 const {User, DownloadedFile,Expense} = require('../model/database');
-
-
-
-const sequelize = new Sequelize('expense', 'root', process.env.SQL_PASSWORD, {
-    host: 'localhost',
-    dialect: 'mysql',
-  });
-
+const db = require('../model/mongoose');
 
 //For showing expense page
 exports.getPremiumPage = (req,res,next)=>{
     res.status(200).sendFile(path.join(__dirname,'../','public','premium.html'));
+
+};
+
+
+//For showing leaderboard page
+exports.getLeaderboardPage = (req,res,next)=>{
+    res.status(200).sendFile(path.join(__dirname,'../','public','leaderboard.html'));
 
 };
 
@@ -25,18 +24,15 @@ exports.getLeaderBoard = async(req,res,next)=>{
   try{
 
     
-    let leaderBoard = await User.findAll({
-      attributes:['name','total_expense'] ,
-      order: [['total_expense', 'DESC']]
-    });
-    
-  
-
+    let leaderBoard = await User.find({})
+    .select('name','total_expense')
+    .sort({total_expense: 'desc'});
 
     res.send(leaderBoard);
   
   }catch(err){
-    console.error(err);
+    console.trace(err);
+    res.send(err);
   }
   
 };
@@ -79,7 +75,7 @@ async function uploadToS3(data,fileName){
 
       })
     })
-    /*,  */
+  
    
 
   }catch(err){
@@ -94,14 +90,17 @@ async function uploadToS3(data,fileName){
 
 
 exports.downloadExpense = async(req,res,next)=>{
+    let t;
     try{
-		    let t = await sequelize.transaction();
         let id = req.userID;
-        const user = await Expense.findAll({
-            where:{
-                userId:id
-            }
+
+		t = await db.startSession();
+        t.startTransaction();
+
+        const user = await Expense.find({
+            userId:id
         });
+
         if(user){
           let stringyfy = JSON.stringify(user);
           let filename = `Expense${id}-${new Date()}.txt`;
@@ -111,18 +110,20 @@ exports.downloadExpense = async(req,res,next)=>{
 		  let link1 = await DownloadedFile.create({
 			userId: id,
 			links: fileUrl.Location
-		  },
-		  {transaction: t
 		  })
-      console.trace(link1);
+
+          console.trace(link1);
           res.status(200).send(fileUrl.Location);  
         }
     
-    t.commit();
+        await t.commitTransaction();
+
     }catch(err){
-        t.rollback();
-        console.error(err);
         res.status(500).send(err);
+        console.trace(err);
+        await t.abortTransaction();
+    }finally{
+        await t.endSession();
     }
 
 
@@ -130,22 +131,24 @@ exports.downloadExpense = async(req,res,next)=>{
 
 
 
+exports.getDownloadedListPage = (req,res,next)=>{
+    res.status(200).sendFile(path.join(__dirname,'../','public','downloadlist.html'));
 
+};
 
 exports.downloadList = async(req,res,next)=>{
 
-  let id = req.userID;
   try{
-    let list = await DownloadedFile.findAll({
-      attributes: ['userId','links'],
-      where: {
+    let id = req.userID;
+    let list = await DownloadedFile.find({
         userId: id
-      }
     })
-    console.trace(list);
+
+    // console.trace(list);
     res.send(list);
   }catch(err){
     console.trace(err);
+    res.send(err);
   }
 
 

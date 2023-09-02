@@ -1,180 +1,86 @@
-const { Sequelize, DataTypes } = require('sequelize');
-const password = require('../credentials/mysql');
+const mongoose = require('mongoose');
 
 
-const sequelize = new Sequelize('expense', 'root', password, {
-    host: 'localhost',
-    dialect: 'mysql',
-  });
-
-
-const User = sequelize.define('user', {
-  // Define the columns of the table
-  id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    primaryKey: true,
-    autoIncrement:true,
-    unique:true
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    // validate: {
-    //   isEmail: true,
-    // },
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull:false,
-
-  },
-  total_expense: {
-    type: DataTypes.FLOAT,
-    allowNull: false
-    
-  }
+// User Schema and Model
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  total_expense: { type: Number, required: true },
 });
 
+const User = mongoose.model('User', userSchema);
 
-
-
-const Expense = sequelize.define('userexepense', {
-    // Define the columns of the table
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement:true,
-      unique:true
-    },
-    amount: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      
-    },
-    category: {
-      type: DataTypes.STRING,
-      allowNull:false,
-      
-    }
-  });
-  
-
-const Orders = sequelize.define('orders',{
-    id:{
-        type: DataTypes.INTEGER,
-        autoIncrement:true,
-        unique:true,
-        primaryKey:true,
-        allowNull:false
-    },
-    paymentid:DataTypes.STRING,
-    orderid:DataTypes.STRING,
-    status:DataTypes.STRING
-
+// Expense Schema and Model
+const expenseSchema = new mongoose.Schema({
+  amount: { type: Number, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
+const Expense = mongoose.model('Expense', expenseSchema);
 
-
-const ForgotPasswordRequests = sequelize.define('forgotpasswordrequests',{
-  sl:{
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    unique: true,
-    primaryKey: true,
-    allowNull: false,
-  
-    
-  },
-  id:{
-      type: DataTypes.INTEGER,
-      unique:true,
-      allowNull:false
-  },
-  userId:{ 
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  isActive:{
-    type: DataTypes.BOOLEAN,
-    allowNull: false
-  }
-
+// Orders Schema and Model
+const orderSchema = new mongoose.Schema({
+  paymentid: String,
+  orderid: String,
+  status: String,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
+const Orders = mongoose.model('Orders', orderSchema);
 
-const DownloadedFile = sequelize.define('downloadedFile',{
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  links: {
-    type: DataTypes.STRING,
-    allowNull: false
-  }
+// ForgotPasswordRequests Schema and Model
+const forgotPasswordRequestSchema = new mongoose.Schema({
+  id: {type: String, required: true},
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  isActive: { type: Boolean, required: true },
+});
 
-}) 
+const ForgotPasswordRequests = mongoose.model('ForgotPasswordRequests', forgotPasswordRequestSchema);
 
+// DownloadedFile Schema and Model
+const downloadedFileSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  links: { type: String, required: true },
+});
 
+const DownloadedFile = mongoose.model('DownloadedFile', downloadedFileSchema);
 
-
-
-
-// Create the table in the database
-async function createTable(obj) {
+// Create the tables in the database
+async function createTables() {
   try {
-    await obj.sync({ force: false });
-    console.log('Table created successfully.');
-  } catch (error) {
-    console.error('Unable to create table:', error);
+    await Promise.all([
+      User.init(),
+      Expense.init(),
+      Orders.init(),
+      ForgotPasswordRequests.init(),
+      DownloadedFile.init(),
+    ]);
+
+    console.log('Schemas created successfully');
+  } catch (err) {
+    console.trace(err);
   }
 }
 
-
-User.hasMany(Expense);
-Expense.belongsTo(User);
-
-User.hasMany(Orders);
-Orders.belongsTo(User);
-
-User.hasMany(ForgotPasswordRequests);
-ForgotPasswordRequests.belongsTo(User);
-
-User.hasMany(DownloadedFile);
-DownloadedFile.belongsTo(User);
-
-let ex = async()=>{
-    await createTable(User);
-    await createTable(Expense);
-    await createTable(Orders);
-    await createTable(ForgotPasswordRequests);
-    await createTable(DownloadedFile);
-}
-
-ex();
-
-
+createTables();
 
 module.exports = {
-    User:User,
-    Expense:Expense,
-    Orders: Orders,
-    FPR: ForgotPasswordRequests,
-    DownloadedFile: DownloadedFile
+  User,
+  Expense,
+  Orders,
+  ForgotPasswordRequests,
+  DownloadedFile,
 };
+
+
+
+
+
+
+
+
+
+

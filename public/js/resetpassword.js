@@ -1,3 +1,7 @@
+// let url = 'http://54.208.165.234';
+let url = 'http://localhost:3000';
+
+
 document.getElementById('button').addEventListener('click',async()=>{
     let pas = document.getElementById('password').value;
     let id = '';
@@ -13,11 +17,11 @@ document.getElementById('button').addEventListener('click',async()=>{
         }
     }
     console.log(id);
-    let res = await axios.post(`http://localhost:3000/password/resetpassword/${id}`,{
+    let res = await axios.post(`${url}/password/resetpassword/${id}`,{
         password: pas
     })
     console.log(res);
-    if(res.data === 'success'){
+    if(res.data){
         alert('password reset complete');
     }
 });

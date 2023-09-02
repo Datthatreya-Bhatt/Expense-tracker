@@ -6,11 +6,11 @@ let url = 'http://localhost:3000';
 let token = localStorage.getItem('token');
 axios.defaults.headers.common['Authorization'] = token;
 
-
+let expenseFileCount = 1;
 
 window.onload = async()=>{
     try{
-        let res = await axios.get(`${url}/expense/data/1/pagelimit?limit=${5}`);
+        let res = await axios.get(`${url}/download/list/1/pagelimit?limit=${5}`);
         console.log(res);
         loop(res);
     
@@ -20,24 +20,7 @@ window.onload = async()=>{
     }
 };
 
-//form submit
-document.getElementById('button').addEventListener('click',async()=>{
-    let amount = document.getElementById('amount').value;
-    let description = document.getElementById('description').value;
-    let category = document.getElementById('category').value;
-    console.log(amount,description,category);
-    try{
-            await axios.post(`${url}/expense/data`,{
-            amount: amount,
-            description: description,
-            category: category
-        });
 
-        location.reload();
-    }catch(err){
-        console.log(err);
-    }
-});
 
 
 //leaderBoard
@@ -78,15 +61,13 @@ document.getElementById('download-file').addEventListener('click',async()=>{
 
 
 
-//downloaded list
 
-document.getElementById('downloaded-files-list').addEventListener('click',async()=>{
+//downloaded list
+document.getElementById('show-expense').addEventListener('click',async()=>{
     
     try{
         
-        location.href = `${url}/premium/downloadlistpage`;
-       
-       
+        location.href = `${url}/user/premium`;
                        
     }catch(err){
         console.log(err);
@@ -123,7 +104,7 @@ async function prev(){
                 limit = 5;
             }
             let page = curr-1;
-            let res = await axios.get(`${url}/expense/data/${page}/pagelimit?limit=${limit}`);
+            let res = await axios.get(`${url}/download/list/${page}/pagelimit?limit=${limit}`);
            // pagination(res);
             loop(res);
 
@@ -156,7 +137,7 @@ async function next(){
                 limit = 5;
             }
             let page = curr+1;
-            let res = await axios.get(`${url}/expense/data/${page}/pagelimit?limit=${limit}`);
+            let res = await axios.get(`${url}/download/list/${page}/pagelimit?limit=${limit}`);
             //pagination(res);
             loop(res);
             
@@ -229,63 +210,39 @@ function loop(res){
 
             let th1 = document.createElement('th');
             let th2 = document.createElement('th');
-            let th3 = document.createElement('th');
-            let th4 = document.createElement('th');
-            let th5 = document.createElement('th');
+            
 
             th1.innerHTML = 'S.N';
-            th2.innerHTML = 'Amount';
-            th3.innerHTML = 'Description';
-            th4.innerHTML = 'Category';
-            th5.innerHTML = 'Delete';
+            th2.innerHTML = 'Files Link';
+            
 
             thead.appendChild(th1);
             thead.appendChild(th2);
-            thead.appendChild(th3);
-            thead.appendChild(th4);
-            thead.appendChild(th5);
+            
 
         for(let i = 0;i<length;i++){
-            let id = res.data.user[i]._id;
-            let amount = res.data.user[i].amount;
-            let description = res.data.user[i].description;
-            let category = res.data.user[i].category;
+            let links = res.data.user[i].links;
+            
 
             let tr = document.createElement('tr');
 
             let td1 = document.createElement('td');
             let td2 = document.createElement('td');
-            let td3 = document.createElement('td');
-            let td4 = document.createElement('td');
-            let td5 = document.createElement('td');
 
-            td1.innerHTML = `${i+1}`;
-            td2.innerHTML = `${amount}`;
-            td3.innerHTML = `${description}`;
-            td4.innerHTML = `${category}`;
+            let a = document.createElement('a');
+            a.href = links;
+            a.innerHTML = `Expense-file-${expenseFileCount++}`;
             
 
-            let btn = document.createElement('button');
-            btn.innerText = 'Delete Item';
-            btn.className = 'btn btn-primary btn-sm';
-            btn.addEventListener('click',async()=>{
-                try{
-                    let res = await axios.delete(`${url}/expense/${id}`)
-                    td5.parentNode.removeChild(td5);
-                    location.reload();
-                }catch(err){
-                    console.log(err);
-                }
-            });
-
-            td5.appendChild(btn);
+            td1.innerHTML = `${i+1}`;
+            
+            td2.appendChild(a);
+            
+            
             let tbody = document.getElementById('tbody');
            
             tr.appendChild(td1);
             tr.appendChild(td2);
-            tr.appendChild(td3);
-            tr.appendChild(td4);
-            tr.appendChild(td5);
 
             tbody.appendChild(tr);
         };

@@ -1,18 +1,15 @@
 const path = require('path');
-require('dotenv').config();
 const Sib = require('sib-api-v3-sdk');
 const {v4: uuid } = require('uuid');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Sequelize  } = require('sequelize');
 
-const {User,FPR} = require('../model/database');
+require('dotenv').config();
 
 
-const sequelize = new Sequelize('expense', 'root', process.env.SQL_PASSWORD, {
-    host: 'localhost',
-    dialect: 'mysql',
-  });
+const {User,ForgotPasswordRequests} = require('../model/database');
+const db = require('../model/mongoose')
+
 
 //For showing forgotpassword page
 exports.getforgotpasswordPage = (req,res,next)=>{
@@ -24,39 +21,36 @@ exports.getforgotpasswordPage = (req,res,next)=>{
 
 //For sending email
 exports.getEmail = async (req,res,next)=>{
-    const t = await sequelize.transaction();
-    let email = req.body.email;
-    let uid = uuid();
-    let userid = '';
+
+    let t;
 
     try{
-        let user = await User.findOne({
-            attributes: ['id','email'],
-            where: {
-                email: email
-            }
+        t = await db.startSession();
+        t.startTransaction();
 
+        let email = req.body.email;
+        let uid = uuid();
+        let userid = '';
+
+
+
+        let user = await User.findOne({
+            email: email
         })
 
         if(user){
-            userid = user.id;
+            userid = user._id;
             
         }
         
-        let data = await FPR.create({
+        let data = await ForgotPasswordRequests.create({
             id: uid,
-            userId: Number(userid),
+            userId: userid,
             isActive: true 
 
-        },{transaction: t})
+        })
 
         
-    }catch(err){
-        await t.rollback();
-        console.error(err);
-    }
-
-    try{  
         const client = Sib.ApiClient.instance;
 
         const apiKey = client.authentications['api-key'];
@@ -84,10 +78,13 @@ exports.getEmail = async (req,res,next)=>{
 
         res.send('success');
         
-    await t.commit();
+        await t.commitTransaction();
     }catch(err){
-        await t.rollback();
-        console.error('line 88',err);
+        res.send(err);
+        console.trace(err);
+        await t.abortTransaction();
+    }finally{
+        await t.endSession();
     }
 
 };
@@ -95,17 +92,14 @@ exports.getEmail = async (req,res,next)=>{
 
 
 exports.getResetPage = async(req,res,next)=>{
-    let uid = req.params.id;
 
     try{
-        let data = await FPR.findOne({
-           // attributes: ['id','isActive'],
-            where: {
-                id: uid,
-                isActive: 1
-               
-            }
+        let uid = req.params.id
+        let data = await ForgotPasswordRequests.findOne({
+            id: uid,
+            isActive: 1
         })
+
         console.log(data);
         if(data != null && data.isActive){
             res.status(200).sendFile(path.join(__dirname,'../','public','resetpassword.html'));
@@ -113,78 +107,68 @@ exports.getResetPage = async(req,res,next)=>{
             res.send('cannot find emailll');
         }
     }catch(err){
-        console.error(err);
+        console.trace(err);
+        res.send(err);
     }
 
 
 };
 
 exports.postResetPas = async(req,res,next)=>{
-    let uid = req.params.id;
-    let password = req.body.password;
-    let t = await sequelize.transaction();
 
+    let t;
     try{
-        let data = await FPR.findOne({
-            attributes: ['id','userId','isActive'],
-            where: {
-                id: uid,
-                isActive: true
-            }
+        let uid = req.params.id;
+        let password = req.body.password;
+
+        t = await db.startSession();
+        t.startTransaction();
+    
+        let data = await ForgotPasswordRequests.findOne({
+            id: uid,
+            isActive: true
         })
-        console.log(data,'line 130',data.isActive);
+
+        console.trace(data,data.isActive);
+
         if(data.isActive){
-            try{
-                let fpr = await FPR.update({
-                    isActive: false
-                },{
-                    where: {
-                        id: uid
-                    },
-                    transaction: t
-                })
-
-
-
-
-                //creating new user
-                const saltRound = 10;
-                let hash = await bcrypt.hash(password,saltRound);
+      
+            let fpr = await ForgotPasswordRequests.update({
+                id: uid
+            },
+            {
+                isActive: false
                 
-                console.trace(hash);
+            })
+
+            //creating new user
+            const saltRound = 10;
+            let hash = await bcrypt.hash(password,saltRound);
+            
+            console.trace(hash);
                 
-                try {
-                    let user = await User.update({
-                        password: hash
-                    },{
-                        where: {
-                            id: data.userId
-                        },
-                        transaction: t
-                    })
-                    console.trace(user,user[0]);
-                    if(user){
-                        let id = user[0];
-                        let token = jwt.sign({id:id},process.env.JWT_S_KEY);
-                        res.status(201).send(token);
-                        console.trace(user);
-                    }
-                 } catch (err) {
-                    console.error(err);
-                    
-                 }
+        
+            let user = await User.updateOne({
+                _id: data.userId
+            },{
+                password: hash
+            })
 
-
-
-
-
-            }catch(err){
-                console.error(err);
+            if(user){
+                let id = user[0];
+                let token = jwt.sign({id:id},process.env.JWT_S_KEY);
+                res.status(201).send({token: token});
+                console.trace(user);
             }
+     
         }
-    await t.commit();
+        await t.commitTransaction();
     }catch(err){
-        await t.rollback();
-        console.error(err);
+        console.trace(err);
+        await t.abortTransaction();
+
+    }finally{
+        await t.endSession();
     }
+
 };

@@ -1,7 +1,11 @@
+// let url = 'http://54.208.165.234';
+let url = 'http://localhost:3000';
+
+
 document.getElementById('button').addEventListener('click',async()=>{
     let email = document.getElementById('email').value;
     try{
-        let res = await axios.post('http://localhost:3000/password/forgotpassword',{
+        let res = await axios.post(`${url}/password/forgotpassword`,{
             email: email
            
         })

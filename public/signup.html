@@ -6,24 +6,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/signup.css">
     <title>Expence tracker app</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 </head>
 <body>
-    <div class="container">
-        <div class="item">
-            <form>
-                <label >Name</label><br>
-                <input type="text" id="name" required ><br>
-                <label  >Email</label><br>
-                <input type="email" id="email" required><br>
-                <label >Password</label><br>
-                <input type="number" id="password" required><br>
-            </form>
-            <button id="button">Signup</button>
-            <a href="http://localhost:3000/user/login">Already an user - login</a>
+    
+    <header class="navbar navbar-expand-md" style="background-color: #e3f2fd;">
+
+        <div class="container-fluid">
+              <p class="navbar-brand" >Welcome To Expense Tracker App</p>
+              
+              <a href="http://localhost:3000/login" class="text-color">Already an user - login</a>
+           
         </div>
+               
+    </header>
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-4"></div>
+
+            <div class="col-md-4">
+                <div class="card" style="width: 18rem;">
+                    <div class="my-color card-body">
+                      <h5 class="card-title">Signup</h5>
+                      <label class="text-light" >Name</label>
+                      <input type="text" class="input-group-text" id="name" required><br>
+
+                      <label  >Email</label>
+                      <input type="email" class="input-group-text" id="email" required><br>
+                      
+                      <label >Password</label>
+                      <input type="password" id="password" class="input-group-text" required><br>
+                      
+                      <input type="button" id="button" class="btn btn-primary" value="Signup">
+                      
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4"></div>
+        </div>         
+           
     </div>
 
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script type="text/javascript" src="/js/signup.js"></script>
 </body>
 </html>

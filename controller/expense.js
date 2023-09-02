@@ -1,19 +1,11 @@
 const path = require('path');
-const bcrypt = require('bcrypt');
 
-const { Sequelize  } = require('sequelize');
-const {User} = require('../model/database'); 
-const {Expense} = require('../model/database');
-const {Orders} = require('../model/database');
-
+const {User, Expense, Orders} = require('../model/database');
+const db = require('../model/mongoose');
 
 require('dotenv').config();
 
 
-const sequelize = new Sequelize('expense', 'root',  process.env.SQL_PASSWORD, {
-    host: 'localhost',
-    dialect: 'mysql',
-  });
 
 
 
@@ -24,26 +16,23 @@ exports.getData= (req,res,next)=>{
 };
 
 exports.getExpenseData = async (req,res,next)=>{
-   
-    // console.log('line 14 >>>>>',req.userID);
-    let id = req.userID;
-    let page = Number( req.params.page);
-    let limit = Number(req.query.limit);
+
     
     try{
+   
+        let id = req.userID;
+        let page = Number( req.params.page);
+        let limit = Number(req.query.limit);
 
-        const user = await Expense.findAll({
-            offset: (page-1)*limit,
-            limit: limit,
-            where:{
-                userId:id
-            }
-        });
-        let count = await Expense.count({
-            where: {
-                userId: id
-            }
-        });
+
+
+        const user = await Expense.find({userId:id })
+        .skip((page-1)*limit)
+        .limit(limit);
+
+        let count = await Expense.countDocuments({ userId: id });
+
+
         count = Math.ceil(count/limit);
         let obj = {
             count: count,
@@ -52,15 +41,15 @@ exports.getExpenseData = async (req,res,next)=>{
   
         if(user){
             res.send({user: user,obj:obj});
-             //console.log(' expense control line 27',user);
         }
         else{
-            //res.send('fail')
+            res.send('fail')
             console.log('expense control line 31',user);
         }
     
     }catch(err){
-        console.error(err);
+        console.trace(err);
+        res.send(err)
     }
 
 
@@ -68,12 +57,17 @@ exports.getExpenseData = async (req,res,next)=>{
 
 
 exports.postData = async (req,res,next)=>{
-    let {amount,description,category} = req.body;
-    const t = await sequelize.transaction();
+    let t;
+    try{
+    
+        let {amount,description,category} = req.body;
 
-    if(amount.length>0 && description.length>0 && category.length>0){
-        let id = req.userID;
-        try{
+         t = await db.startSession();
+
+         t.startTransaction();
+
+        if(amount.length>0 && description.length>0 && category.length>0){
+            let id = req.userID;
 
             //updating expense table
             const expense = await Expense.create(
@@ -81,164 +75,134 @@ exports.postData = async (req,res,next)=>{
                     amount:amount,
                     description:description,
                     category: category,
-                    userId : id,
+                    userId: id,
                    
-                },
-                { transaction: t}
+                }
             )
             if(expense){
                 res.send('success from postData');
-                console.log('success from postData');
                 
             }
             else{
                 res.send('expense/postData error');
-                console.log('expense/postData error');
+                console.trace('expense/postData error');
             }
 
 
             //updating user table
-            let user = await User.findOne({
-                attributes: ['id','total_expense'],
-                where:{
-                    id: id
-                }
-                
-            })
+            let user = await User.findOne({ _id: id  })
 
 
             let ex = Number(user.total_expense)  + Number(amount);
 
-            let update = await User.update({
-                total_expense: ex
+            let update = await User.updateOne({
+                _id: id, 
             },{
-                where: {
-                    id: id
-                },
-                transaction: t
-                
+                total_expense: ex
             })
 
+
             if(update){
-                await t.commit();
+                await t.commitTransaction();
             }
 
 
-
+        }
 
         }catch(err){
             console.error(err);
-            await t.rollback();
+            await t.abortTransaction();
+
+        }finally{
+            await t.endSession();
         }
 
-    }
+    
 };
 
 exports.deleteData = async (req,res,next)=>{
-    let id = req.userID;
-    let entry = req.params.id;
-    const t = await sequelize.transaction();
-    let amount = 0;
- try{
-
-    //for getting amount from Expense table
+    let t;
     try{
 
+        let id = req.userID;
+        let entry = req.params.id;
+        let amount = 0;
+
+
+
+        t = await db.startSession();
+        t.startTransaction();
+
+        //for getting amount from Expense table
         let data  = await Expense.findOne({
-            attributes:['amount'],
-            where:{
-                userId:id,
-                id:entry
-            }
+            userId:id,
+            _id:entry
+            
         });
 
         //for getting data from user table
 
         let data2 = await User.findOne({
-            attributes: ['total_expense'],
-            where: {
-                id: id
-            }
+            _id: id
         })
 
         amount = Number(data2.total_expense) - Number(data.amount);
 
         if(data && data2){
-            //console.log('no error');
+            console.log('no error');
         }
         else{
-            console.error('error in delete');
+            console.trace('error in delete');
         }
 
 
-    }catch(err){
-        console.error(err);
-       
-    }
 
-
-    
-
-    //for updating database
-    try{
-
-         
-        const user = await User.update({
-            total_expense: amount
+        //for updating database
+        
+        const update = await User.updateOne({
+            _id: id
+           
         },{
-            where:{
-                id: id
-            },
-            transaction:t
+            total_expense: amount
         })
 
-        if(user){
-           console.log('success');
+        if(update){
+        console.log('success');
         }
 
-    }catch(err){
-        console.error(err);
       
-    }
 
 
 
-    
-    //for deleting from database
-    try{
-        const user = await Expense.destroy({
-            where:{
-                userId:id,
-                id:entry
-            },
-            transaction:t
+        
+        //for deleting from database
+     
+        const user = await Expense.deleteOne({
+            userId:id,
+            _id:entry
+
         });
 
         if(user){
             res.send('success');
-           
+        
         }else{
             res.send('fail');
         }
 
+       
+
+
+        await t.commitTransaction();
+
     }
     catch(err){
-        console.error(err);
-      
+        console.trace(err);
+        await t.abortTransaction();
+    
+    }finally{
+        await t.endSession();
     };
-
-
-    await t.commit();
-
-}
-catch(err){
-    console.error(err);
-    await t.rollback();
-  
-};
-
-
-
 
 
 };
@@ -250,15 +214,13 @@ catch(err){
 
 
 exports.isPremium = async(req,res,next)=>{
-    let id = req.userID;
 
     try{
+        let id = req.userID;
 
         let data = await Orders.findOne({
-            where:{
-                userId: id,
-                status: 'SUCCESS'
-            }
+            userId: id,
+            status: 'SUCCESS'
         })
 
         if(data){
@@ -269,6 +231,7 @@ exports.isPremium = async(req,res,next)=>{
 
 
     }catch(err){
-        console.error(err);
+        console.trace(err);
+        res.send(err);
     }
 };

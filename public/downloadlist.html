@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/css/premium.css">
+    <link rel="stylesheet" href="/css/downloadlist.css">
     <title>Expence tracker app</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 </head>
@@ -13,50 +13,20 @@
 
         <div class="container-fluid">
                     <p class="navbar-brand">You are a premium user</p>
+
+                    <button id="show-expense" class="btn btn-outline-primary btn-sm">Show Expense</button>
               
                     <button id="leaderboard" class="btn btn-outline-primary btn-sm">leaderboard</button>
 
                     <button id="download-file" class="btn btn-outline-primary btn-sm">Download File</button>
               
-                    <button id="downloaded-files-list" class="btn btn-outline-primary btn-sm">Downloaded Files List</button>
+                    
                
         </div>
                
     </header>
 
-    <div class="b container">
-        <div class="row">
-
-                <div class="col-md-3">
-                    <label  >Amount</label>
-                    <input type="number" id="amount" class="input-group-text" required >
-                </div>
-                
-
-                <div class="col-md-3">
-                    <label  >Description</label>
-                    <input type="text" id="description" class="input-group-text" required>
-                </div>
-               
-
-                <div class="col-md-3">
-                    <label  >Choose category</label>
-                    <select id="category" class="input-group-text" >
-                        <option value="groccery">Groccery</option>
-                        <option value="utility">Utility</option>
-                        <option value="entertainment">Entertainment</option>
-                        <option value="vacation">Vacation</option>
-                    </select>    
-                </div>
-                
-                <div class="col-md-3">
-                    <label  >Submit Values</label><br>
-                    <input type="button" class="btn btn-primary" id="button" value="Submit">
-                </div>
-               
-        </div>
-    </div>
-
+   
 <!-- ============================== -->
    
         <table class="table table-striped table-bordered border-success table-hover">
@@ -80,9 +50,10 @@
     <!-- ========================== -->
 
 
+
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="/js/premium.js"></script>
+    <script type="text/javascript" src="/js/downloadlist.js"></script>
 </body>
 </html>
